@@ -1,53 +1,69 @@
 #!/usr/bin/env bash
 
-# update apt-get
+vagrant plugin install vagrant-vbguest
+vagrant plugin install vagrant-hostmanager
+
+### update apt-get
 sudo apt-get update
 
-#install postgres
-sudo apt-get -y install postgresql postgresql-contrib php5-pgsql
-# copy the hba conf to the linux conf
-cp -f /vagrant/config/pg_hba.conf /etc/postgresql/9.1/main/pg_hba.conf
-# copy the postgresql conf to the linux conf
-cp -f /vagrant/config/postgresql.conf /etc/postgresql/9.1/main/postgresql.conf
-# start postgres
-service postgresql restart
+### install all sorts of shit
+echo 'SCRIPT - install all sorts of shit';
+sudo apt-get -y install postgresql postgresql-contrib php5-pgsql php5-cli libapache2-mod-php5
+
+
+
+# echo 'SCRIPT - logging in';
+# sudo -u postgres psql postgres
+# \password postgres
+# \q
+# sudo su postgres
+# createdb application 
 
 
 # install apache
+echo 'Installing apache';
 apt-get install -y apache2
 if ! [ -L /var/www ]; then
   rm -rf /var/www
   ln -fs /vagrant /var/www
 fi
 
-
-# install apache lib to run php
-sudo apt-get -y install libapache2-mod-php5
 # apache2 enable php
+echo 'a2enmod';
 a2enmod php5
 
-sudo apt-get install php5-cli
+### copy configs
+# copy the hba conf to the linux conf
+echo 'SCRIPT - copying pg_hba.conf';
+sudo cp -f /etc/postgresql/9.1/main/pg_hba.conf /etc/postgresql/9.1/main/pg_hba-original.conf
+sudo cp -f /vagrant/config/pg_hba.conf /etc/postgresql/9.1/main/pg_hba.conf
+
+# copy the postgresql conf to the linux conf
+echo 'SCRIPT - copying postgresql.conf';
+sudo cp -f /etc/postgresql/9.1/main/postgresql.conf /etc/postgresql/9.1/main/postgresql-original.conf
+sudo cp -f /vagrant/config/postgresql.conf /etc/postgresql/9.1/main/postgresql.conf
 
 # copy in php.ini
-cp -f /vagrant/config/postgresql.conf /etc/php5/apache2/php.ini
+echo 'SCRIPT - copying php.ini';
+sudo cp -f /etc/php5/apache2/php.ini /etc/php5/apache2/php-original.ini
+sudo cp -f /vagrant/config/php.ini /etc/php5/apache2/php.ini
+
+# copy in httd.conf
+echo 'SCRIPT - copying httpd.conf';
+sudo cp -f /vagrant/config/httpd.conf /etc/apache2/httpd-original.conf
+sudo cp -f /vagrant/config/httpd.conf /etc/apache2/httpd.conf
+
+
 
 #install vim
+echo 'SCRIPT - vim';
 sudo apt-get install vim
 
 
-
-#sudo su postgres
-
-#create user application
-
-#/etc/postgresql/9.1/main/postgresql.conf
-#listen_addresses = '*'
-
-#cd
-#sudo -u postgres psql template1
-#ALTER USER postgres with encrypted password 'your_password';
-
+# restart all the things
+echo 'SCRIPT - restarting postgres and apache';
 sudo service postgresql restart
+sudo service apache2 restart
 
-createdb application
-createtable application_test
+
+
