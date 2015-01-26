@@ -3,12 +3,15 @@
 # update apt-get
 sudo apt-get update
 
-#install apache
+#install postgres
 sudo apt-get -y install postgresql postgresql-contrib php5-pgsql
-# copy the conf to the linux conf
+# copy the hba conf to the linux conf
 cp -f /vagrant/config/pg_hba.conf /etc/postgresql/9.1/main/pg_hba.conf
+# copy the postgresql conf to the linux conf
+cp -f /vagrant/config/postgresql.conf /etc/postgresql/9.1/main/postgresql.conf
 # start postgres
 service postgresql restart
+
 
 # install apache
 apt-get install -y apache2
@@ -25,9 +28,13 @@ a2enmod php5
 
 sudo apt-get install php5-cli
 
+# copy in php.ini
+cp -f /vagrant/config/postgresql.conf /etc/php5/apache2/php.ini
+
+#install vim
 sudo apt-get install vim
 
-#turn display_errors on in php.ini
+
 
 #sudo su postgres
 
@@ -42,4 +49,5 @@ sudo apt-get install vim
 
 sudo service postgresql restart
 
+createdb application
 createtable application_test
