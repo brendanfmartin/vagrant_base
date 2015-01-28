@@ -1,54 +1,22 @@
 #!/usr/bin/env bash
 
-# turns off questions
 export DEBIAN_FRONTEND=noninteractive
 
-echo '!!SCRIPT - attempting database';
 
+############################
+# database
+############################
 
-# for file in /vagrant/database/*; do
-#     sudo -u postgres psql postgres -f "$file"
-# done
-
-
-
-# db name
+# Edit the following to change the name of the database user that will be created:
 APP_DB_USER=myapp
-# db password
 APP_DB_PASS=dbpass
 
-# db name
-APP_DB_NAME=myapp
+# Edit the following to change the name of the database that is created (defaults to the user name)
+APP_DB_NAME=$APP_DB_USER
 
-# postgresql version
+# Edit the following to change the version of PostgreSQL that is installed
 PG_VERSION=9.3
 
-###########################################################
-# Changes below this line are probably not necessary
-###########################################################
-print_db_usage () {
-  echo "Your PostgreSQL database has been setup and can be accessed on your local machine on the forwarded port (default: 15432)"
-  echo "  Host: localhost"
-  echo "  Port: 15432"
-  echo "  Database: $APP_DB_NAME"
-  echo "  Username: $APP_DB_USER"
-  echo "  Password: $APP_DB_PASS"
-  echo ""
-  echo "Admin access to postgres user via VM:"
-  echo "  vagrant ssh"
-  echo "  sudo su - postgres"
-  echo ""
-  echo "psql access to app database user via VM:"
-  echo "  vagrant ssh"
-  echo "  sudo su - postgres"
-  echo "  PGUSER=$APP_DB_USER PGPASSWORD=$APP_DB_PASS psql -h localhost $APP_DB_NAME"
-  echo ""
-  echo "Env variable for application development:"
-  echo "  DATABASE_URL=postgresql://$APP_DB_USER:$APP_DB_PASS@localhost:15432/$APP_DB_NAME"
-  echo ""
-  echo "Local command to access the database via psql:"
-  echo "  PGUSER=$APP_DB_USER PGPASSWORD=$APP_DB_PASS psql -h localhost -p 15432 $APP_DB_NAME"
-}
 
 
 PROVISIONED_ON=/etc/vm_provision_on_timestamp
@@ -72,10 +40,10 @@ then
 fi
 
 # Update package list and upgrade all packages
-apt-get update
-apt-get -y upgrade
+sudo apt-get update
+# apt-get -y upgrade
 
-apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION"
+sudo apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION"
 
 PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
 PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
@@ -105,23 +73,26 @@ CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER
                                   TEMPLATE=template0;
 EOF
 
-# Tag the provision time:
-date > "$PROVISIONED_ON"
 
-echo "Successfully created PostgreSQL dev virtual machine."
-echo ""
-print_db_usage
+
+
+
+
+
+############################
+# php & apache
+############################
 
 
 
 ### install all sorts of shit
 echo '!!SCRIPT - installing php';
-sudo apt-get -y install php5-pgsql php5-cli libapache2-mod-php5
+sudo apt-get -y install php5 php5-pgsql php5-cli libapache2-mod-php5
 
 
 # install apache
 echo '!!SCRIPT - Installing apache';
-apt-get install -y apache2
+sudo apt-get install -y apache2
 if ! [ -L /var/www ]; then
   rm -rf /var/www
   ln -fs /vagrant /var/www
@@ -151,39 +122,11 @@ fi
 echo '!!SCRIPT - copying httpd.conf';
 sudo cp -f /vagrant/config/httpd.conf /etc/apache2/httpd.conf
 
-
-# ### copy configs
-# # copy the hba conf to the linux conf
-# if [ ! -f /etc/postgresql/9.1/main/pg_hba-original.conf ];
-# then
-#     echo '!!SCRIPT - backing up pg_hba.conf';
-#     sudo cp -f /etc/postgresql/9.1/main/pg_hba.conf /etc/postgresql/9.1/main/pg_hba-original.conf
-# fi
-# echo '!!SCRIPT - copying pg_hba.conf';
-# sudo cp -f /vagrant/config/pg_hba.conf /etc/postgresql/9.1/main/pg_hba.conf
-
-# # copy the postgresql conf to the linux conf
-# if [ ! -f /etc/postgresql/9.1/main/postgresql-original.conf ];
-# then
-#     echo '!!SCRIPT - backing up postgresql.conf';
-#     sudo cp -f /etc/postgresql/9.1/main/postgresql.conf /etc/postgresql/9.1/main/postgresql-original.conf
-# fi
-# echo '!!SCRIPT - copying postgresql.conf';
-# sudo cp -f /vagrant/config/postgresql.conf /etc/postgresql/9.1/main/postgresql.conf
-
-
-
+# restart all the things
+echo '!!SCRIPT - restarting postgres and apache';
+sudo service apache2 restart
 
 
 #install vim
 echo '!!SCRIPT - vim';
 sudo apt-get install -y vim
-
-
-# restart all the things
-echo '!!SCRIPT - restarting postgres and apache';
-sudo service postgresql restart
-sudo service apache2 restart
-
-
-

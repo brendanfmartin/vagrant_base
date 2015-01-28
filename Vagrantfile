@@ -15,7 +15,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     # box config
-    config.vm.box = "hashicorp/precise32"
+    config.vm.box = "hashicorp/precise64"
 
     # provisioning
     config.vm.provision :shell, path: "bootstrap.sh"
@@ -24,6 +24,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.network :forwarded_port, host: 4567, guest: 80
 
     # PostgreSQL Server port forwarding
-    config.vm.network :forwarded_port, host: 5432, guest: 15432
+    config.vm.network :forwarded_port, host: 15432, guest: 5432
 
 end
