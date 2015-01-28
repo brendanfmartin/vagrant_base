@@ -1,0 +1,1 @@
+CREATE TABLE "othertest_table";

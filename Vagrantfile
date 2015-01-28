@@ -23,16 +23,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # network
     config.vm.network :forwarded_port, host: 4567, guest: 80
 
-    
-    ### synced folders ###
-
-    # synced database folder
-    #config.vm.synced_folder VAGRANTFILE_DATABASE_FOLDER, "/home/vagrant/database"
-
-    # synced sites available folder
-    #config.vm.synced_folder "../../config/apache/", "/etc/apache2/sites-available"
-
-    # synced weather tracker apache folder
-    #config.vm.synced_folder "../../", "/var/www/weather-tracker.com"
-
+    config.vm.forward_port 5432, 15432
 end
