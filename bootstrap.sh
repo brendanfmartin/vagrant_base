@@ -71,10 +71,39 @@ CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER
                                   LC_CTYPE='en_US.utf8'
                                   ENCODING='UTF8'
                                   TEMPLATE=template0;
+
+-- Sequence: person_seq
+CREATE SEQUENCE person_seq
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 2
+  CACHE 1;
+ALTER TABLE person_seq
+  OWNER TO $APP_DB_USER;
+
+
+-- Table: person
+CREATE TABLE person
+(
+  id integer NOT NULL DEFAULT nextval('person_seq'::regclass),
+  first_name character varying,
+  last_description character varying,
+  height float,
+  weight float,
+  CONSTRAINT person_pkey PRIMARY KEY (id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE person
+  OWNER TO $APP_DB_USER;
+
+
+INSERT INTO person(first_name, last_description, height, weight)
+    VALUES ('Brendan', 'Martin', 70, 200);
+
 EOF
-
-
-
 
 
 

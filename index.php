@@ -11,7 +11,7 @@ try {
 
 function selectTest($dbh) {
     /*** The SQL SELECT statement ***/
-    $sql = "SELECT * FROM location";
+    $sql = "SELECT * FROM person";
 
     /*** fetch into an PDOStatement object ***/
     $stmt = $dbh->query($sql);
