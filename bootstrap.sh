@@ -7,13 +7,6 @@ export DEBIAN_FRONTEND=noninteractive
 # database
 ############################
 
-# Edit the following to change the name of the database user that will be created:
-APP_DB_USER=myapp
-APP_DB_PASS=dbpass
-
-# Edit the following to change the name of the database that is created (defaults to the user name)
-APP_DB_NAME=$APP_DB_USER
-
 # Edit the following to change the version of PostgreSQL that is installed
 PG_VERSION=9.3
 
@@ -41,7 +34,7 @@ fi
 
 # Update package list and upgrade all packages
 sudo apt-get update
-# apt-get -y upgrade
+apt-get -y upgrade
 
 sudo apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION"
 
@@ -61,50 +54,24 @@ echo "client_encoding = utf8" >> "$PG_CONF"
 # Restart so that all new config is loaded:
 service postgresql restart
 
+
+# Setting up db
+echo '!!SCRIPT - creating user and db';
 cat << EOF | su - postgres -c psql
--- Create the database user:
-CREATE USER $APP_DB_USER WITH PASSWORD '$APP_DB_PASS';
 
--- Create the database:
-CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER
-                                  LC_COLLATE='en_US.utf8'
-                                  LC_CTYPE='en_US.utf8'
-                                  ENCODING='UTF8'
-                                  TEMPLATE=template0;
-
--- Sequence: person_seq
-CREATE SEQUENCE person_seq
-  INCREMENT 1
-  MINVALUE 1
-  MAXVALUE 9223372036854775807
-  START 2
-  CACHE 1;
-ALTER TABLE person_seq
-  OWNER TO $APP_DB_USER;
-
-
--- Table: person
-CREATE TABLE person
-(
-  id integer NOT NULL DEFAULT nextval('person_seq'::regclass),
-  first_name character varying,
-  last_description character varying,
-  height float,
-  weight float,
-  CONSTRAINT person_pkey PRIMARY KEY (id)
-)
-WITH (
-  OIDS=FALSE
-);
-ALTER TABLE person
-  OWNER TO $APP_DB_USER;
-
-
-INSERT INTO person(first_name, last_description, height, weight)
-    VALUES ('Brendan', 'Martin', 70, 200);
 
 EOF
 
+echo '!!SCRIPT - setting up db';
+for file in /vagrant/database/*; do
+    sudo -u postgres psql -d $APP_DB_NAME postgres -f "$file"
+done
+
+echo '!!SCRIPT - granting user access';
+cat << EOF | su - postgres -c psql
+  GRANT ALL ON DATABASE $APP_DB_NAME TO $APP_DB_USER;
+  ALTER user postgres with password 'postgres';
+EOF
 
 
 
@@ -123,8 +90,8 @@ sudo apt-get -y install php5 php5-pgsql php5-cli libapache2-mod-php5
 echo '!!SCRIPT - Installing apache';
 sudo apt-get install -y apache2
 if ! [ -L /var/www ]; then
-  rm -rf /var/www
-  ln -fs /vagrant /var/www
+  sudo rm -rf /var/www
+  sudo ln -fs /vagrant/zend /var/www
 fi
 
 # apache2 enable php
@@ -142,6 +109,7 @@ fi
 echo '!!SCRIPT - copying php.ini';
 sudo cp -f /vagrant/config/php.ini /etc/php5/apache2/php.ini
 
+
 # copy in httd.conf
 if [ ! -f /etc/apache2/httpd-original.conf ];
 then
@@ -151,6 +119,23 @@ fi
 echo '!!SCRIPT - copying httpd.conf';
 sudo cp -f /vagrant/config/httpd.conf /etc/apache2/httpd.conf
 
+
+
+# copy in 001-test.conf
+if [ ! -f /etc/apache2/sites-available/001-test-original.conf ];
+then
+    echo '!!SCRIPT - backing up 001-test.conf';
+    sudo cp -f /etc/apache2/sites-available/001-test.conf /etc/apache2/sites-available/001-test-original.conf
+fi
+echo '!!SCRIPT - copying 001-test.conf';
+
+sudo cp -f /vagrant/config/001-test.conf /etc/apache2/sites-available/001-test.conf
+sudo ln -fs /etc/apache2/sites-available/001-test.conf /etc/apache2/sites-enabled/001-test.conf
+sudo rm -f /etc/apache2/sites-enabled/000-default.conf 
+
+#enable mod_rewrite
+sudo a2enmod rewrite
+
 # restart all the things
 echo '!!SCRIPT - restarting postgres and apache';
 sudo service apache2 restart
@@ -159,3 +144,8 @@ sudo service apache2 restart
 #install vim
 echo '!!SCRIPT - vim';
 sudo apt-get install -y vim
+
+
+# install zend
+cd /vagrant/zend
+php composer.phar install
