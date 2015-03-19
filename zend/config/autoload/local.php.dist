@@ -13,19 +13,19 @@
 
 return array(
     'db' => array(
-        'username' => 'postgres',
-        'password' => 'postgres',
+        'username' => '',
+        'password' => '',
     ),
     'doctrine' => array(
         'connection' => array(
             'orm_default' => array(
                 'driverClass' => 'Doctrine\DBAL\Driver\PDOPgSql\Driver',
                 'params' => array(
-                    'host'     => 'dev.pims',
+                    'host'     => '',
                     'port'     => '5432',
-                    'user'     => 'postgres',
-                    'password' => 'postgres',
-                    'dbname'   => 'pims',
+                    'user'     => '',
+                    'password' => '',
+                    'dbname'   => '',
                 )
             )
         )
